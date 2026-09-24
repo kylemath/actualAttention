@@ -5,10 +5,10 @@
   "kind": "project",
   "status": "published",
   "server": {
-    "type": "static",
-    "port": 8080,
     "openPath": "/",
-    "autoStart": false
+    "autoStart": false,
+    "type": "static",
+    "port": 8080
   },
   "screenshot": "./screenshot.png",
   "demoUrl": "https://kylemath.github.io/actualAttention"
