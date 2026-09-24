@@ -1,0 +1,105 @@
+\section{Methods}
+
+\subsection{Theoretical Framework: Compression vs.\ Covariance}
+
+The central distinction in this work is between \textit{sequential compression} and \textit{lossless covariance}. We formalize these concepts to motivate our architectural comparisons.
+
+\textbf{Sequential Compression (RNN/LSTM).} Given an input sequence $\{x_1, x_2, \ldots, x_T\}$, recurrent architectures maintain a hidden state $h_t \in \mathbb{R}^d$ that evolves according to:
+\begin{equation}
+h_t = f(h_{t-1}, x_t; \theta)
+\end{equation}
+where $f$ is a learned transition function. The critical limitation is that \textit{all historical information} must be compressed into the fixed-dimensional state $h_t$. As sequence length $T$ grows, information about early tokens is progressively overwritten---a phenomenon known as the compression bottleneck.
+
+\textbf{Lossless Covariance (Transformer).} Transformers compute attention weights over all pairs of positions simultaneously:
+\begin{equation}
+A = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right), \quad \text{Output} = AV
+\end{equation}
+where $Q, K, V \in \mathbb{R}^{T \times d}$ are learned projections of the input. The attention matrix $A \in \mathbb{R}^{T \times T}$ explicitly represents pairwise relationships between all positions, preserving $O(T^2)$ relational information. This ``covariance-like'' structure (analogous to a Gram matrix) enables direct application of biological attention mechanisms.
+
+\subsection{Architectures}
+
+We compare three architectures at matched parameter scales ($\sim$3.5M parameters):
+
+\textbf{Vanilla RNN.} A 2-layer RNN with hidden dimension $d=512$ and tanh activation:
+\begin{equation}
+h_t^{(l)} = \tanh(W_{hh}^{(l)} h_{t-1}^{(l)} + W_{xh}^{(l)} h_t^{(l-1)} + b^{(l)})
+\end{equation}
+The RNN processes sequences sequentially, with no explicit mechanism for attending to specific positions.
+
+\textbf{LSTM.} A 2-layer LSTM with gated memory cells:
+\begin{align}
+i_t &= \sigma(W_i x_t + U_i h_{t-1} + b_i) & \text{(input gate)} \\
+f_t &= \sigma(W_f x_t + U_f h_{t-1} + b_f) & \text{(forget gate)} \\
+o_t &= \sigma(W_o x_t + U_o h_{t-1} + b_o) & \text{(output gate)} \\
+\tilde{c}_t &= \tanh(W_c x_t + U_c h_{t-1} + b_c) & \text{(cell candidate)} \\
+c_t &= f_t \odot c_{t-1} + i_t \odot \tilde{c}_t & \text{(cell state)} \\
+h_t &= o_t \odot \tanh(c_t) & \text{(hidden state)}
+\end{align}
+The gating mechanism provides more control over information flow but still operates under the compression constraint.
+
+\textbf{Transformer.} A 6-layer encoder with 8 attention heads and $d_{model}=512$:
+\begin{equation}
+\text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h)W^O
+\end{equation}
+where each head computes scaled dot-product attention independently. Sinusoidal positional encodings provide sequence order information.
+
+\subsection{Biological Attention Mechanisms}
+
+We implement four mechanisms inspired by neuroscience literature on selective attention:
+
+\textbf{Biased Competition} \cite{desimone1995neural}. In biological vision, top-down signals bias competition between stimuli toward task-relevant features. We implement this as a learnable additive bias:
+\begin{equation}
+\tilde{x} = x + \beta \cdot b_{\text{task}}
+\end{equation}
+where $b_{\text{task}} \in \mathbb{R}^d$ is a learned task bias and $\beta=0.25$ controls its strength. For transformers, this is added after positional encoding; for RNN/LSTM, it biases the input gate.
+
+\textbf{Lateral Inhibition.} Biological neural circuits exhibit lateral inhibition, where active neurons suppress their neighbors. We implement this as mean-centering:
+\begin{equation}
+\tilde{s}_{ij} = s_{ij} - \alpha \cdot \frac{1}{T} \sum_{k=1}^{T} s_{ik}
+\end{equation}
+where $s_{ij}$ are attention scores (or hidden activations for RNN/LSTM) and $\alpha=0.3$ is the inhibition strength. This encourages competition by removing the common mode.
+
+\textbf{Tuning Sharpening.} Attention sharpens neural tuning curves, increasing selectivity. We implement this via temperature scaling:
+\begin{equation}
+\tilde{s}_{ij} = \beta_{\text{sharp}} \cdot s_{ij}
+\end{equation}
+where $\beta_{\text{sharp}} > 1$ (default 1.5) sharpens the attention distribution. For transformers, this is applied before softmax; for RNN/LSTM, it scales gate pre-activations.
+
+\textbf{Noise Decorrelation.} Attention reduces correlated noise across neural populations. We implement this as a diversity loss:
+\begin{equation}
+\mathcal{L}_{\text{div}} = \lambda \cdot \frac{1}{h(h-1)} \sum_{i \neq j} |\text{corr}(A_i, A_j)|
+\end{equation}
+where $A_i, A_j$ are attention patterns from different heads (or cell dimensions for LSTM), and $\lambda=0.05$. This encourages heads to attend to different aspects of the input.
+
+\subsection{Integration Across Architectures}
+
+A key insight of this work is that biological mechanisms integrate differently across architectures:
+
+\begin{itemize}
+\item \textbf{Transformers}: Mechanisms operate \textit{directly} on the attention matrix $A$, which explicitly represents pairwise relationships. Lateral inhibition removes redundant attention; sharpening focuses attention peaks; decorrelation diversifies multi-head patterns.
+
+\item \textbf{RNN/LSTM}: Mechanisms operate \textit{indirectly} through the hidden state. Because pairwise relationships are compressed into a fixed-size vector, the mechanisms can only influence the \textit{current} step's processing, not the historical relationships already lost to compression.
+\end{itemize}
+
+This asymmetry predicts that transformers should benefit more from biological attention mechanisms---a hypothesis we test empirically.
+
+\subsection{Tasks}
+
+\textbf{Copy Task.} A sequence-to-sequence task where the model must copy an input sequence after a blank delimiter. Input: $[x_1, \ldots, x_n, \texttt{BLANK}, \ldots]$; Target: $[\ldots, x_1, \ldots, x_n]$. This tests memory and precise position tracking. We use vocabulary size 10, sequence length 128, and blank length 10.
+
+\textbf{Language Modeling.} Character-level prediction on enwik8, testing long-range dependencies and natural language statistics. Sequence length 256, vocabulary 256 characters.
+
+\textbf{Sequential MNIST.} Pixel-by-pixel classification of MNIST digits (784 sequential inputs), testing very long sequence processing.
+
+\subsection{Training Protocol}
+
+All models are trained with AdamW optimizer (learning rate $10^{-4}$, weight decay $10^{-5}$), gradient clipping at 1.0, and cross-entropy loss. Bio-enhanced models add the diversity loss $\mathcal{L}_{\text{div}}$ to the task loss.
+
+We use three experimental modes:
+\begin{itemize}
+\item \textbf{Cycle mode}: 2 epochs, 200 sequences, $d=128$ (rapid iteration)
+\item \textbf{Fast mode}: 20 epochs, 1000 sequences, $d=256$ (development)
+\item \textbf{Full mode}: 100 epochs, 10,000 sequences, $d=512$ (final results)
+\end{itemize}
+
+Results are averaged over 3--5 random seeds with different initializations. Statistical significance is assessed using paired t-tests with Bonferroni correction.

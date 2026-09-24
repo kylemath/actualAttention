@@ -1,0 +1,39 @@
+<section class="card">
+  <span class="badge">Dashboard</span>
+  <h2>Results summary</h2>
+  <p>
+    Compare runs from previous tabs on a common axis. Logged results show final
+    loss, steps, and attention weights.
+  </p>
+  <div class="row">
+    <button class="primary" id="results-refresh">Refresh</button>
+  </div>
+</section>
+
+<section class="card grid two">
+  <div>
+    <h3>Loss comparison</h3>
+    <canvas class="chart" id="results-chart"></canvas>
+    <div id="results-legend" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;"></div>
+  </div>
+  <div>
+    <h3>Sample attention matrices</h3>
+    <div id="results-matrices"></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Generated images (toy)</h2>
+  <div id="results-images" class="grid three"></div>
+</section>
+
+<section class="card">
+  <h2>Logged runs</h2>
+  <div id="results-table" class="matrix"></div>
+  <div style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 6px; font-size: 0.9rem;">
+    <strong>📊 Variance accountability:</strong> The "var1" column shows the percentage of variance 
+    captured by the top eigenvalue of the attention matrix. Traditional transformers preserve ~100% 
+    of variance (full-rank). Sparse or constrained variants may lose signal—track this metric to 
+    ensure your modifications don't discard critical information.
+  </div>
+</section>

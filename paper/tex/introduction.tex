@@ -1,0 +1,25 @@
+\section{Introduction}
+
+Attention mechanisms are central to modern deep learning, powering transformers that achieve state-of-the-art results across language, vision, and multimodal tasks \cite{vaswani2017attention}. Yet ``attention'' in machine learning differs fundamentally from attention in neuroscience. Transformer attention is a routing mechanism---a soft, differentiable way to aggregate information. Biological attention involves competitive selection, top-down modulation, and dynamic gain control.
+
+This raises a natural question: can neural networks benefit from incorporating principles of biological attention? And if so, do all architectures benefit equally?
+
+We hypothesize that the answer is \textit{no}---and that the degree of benefit depends on a fundamental architectural property: whether the architecture \textit{preserves} or \textit{compresses} relational structure.
+
+\textbf{The Compression-Covariance Dichotomy.} Consider how different architectures process a sequence $\{x_1, \ldots, x_T\}$:
+\begin{itemize}
+\item \textbf{RNN/LSTM}: Information flows through a hidden state $h_t = f(h_{t-1}, x_t)$. All history must be compressed into a fixed-dimensional vector. Pairwise relationships between positions are implicit, mediated through the compressed state.
+\item \textbf{Transformer}: The attention matrix $A_{ij} = \text{softmax}(q_i \cdot k_j / \sqrt{d})$ explicitly stores pairwise relationships. No compression occurs; the model has direct access to how any two positions relate.
+\end{itemize}
+
+This distinction has profound implications for biological attention mechanisms. Lateral inhibition can directly suppress competing attention weights in transformers, but can only influence the current hidden state in RNNs. Tuning sharpening can focus transformer attention on relevant positions, but in RNNs it operates on an already-compressed representation.
+
+\textbf{Contributions.} This paper makes four contributions:
+\begin{enumerate}
+\item We introduce the \textit{compression-covariance framework} for understanding how biological attention mechanisms interact with neural architectures.
+\item We implement four biologically-inspired mechanisms (biased competition, lateral inhibition, tuning sharpening, noise decorrelation) for RNN, LSTM, and Transformer, enabling systematic comparison.
+\item We demonstrate empirically that transformers benefit most from biological enhancement (+11.7\%), followed by LSTM (+6.2\%) and RNN (+4.2\%), directly reflecting our theoretical prediction.
+\item We provide detailed analysis of how biological mechanisms affect attention patterns, sparsity, multi-head diversity, and gradient flow.
+\end{enumerate}
+
+Our findings have implications for neural architecture design: preserving relational structure enables more effective integration of biological computational principles. As the field increasingly draws on neuroscience for inspiration, understanding \textit{which} architectures can leverage \textit{which} principles becomes essential.

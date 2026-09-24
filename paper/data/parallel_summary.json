@@ -1,0 +1,12 @@
+{
+  "num_runs": 18,
+  "tasks": [
+    "copy"
+  ],
+  "archs": [
+    "rnn",
+    "lstm",
+    "transformer"
+  ],
+  "mode": "parallel"
+}

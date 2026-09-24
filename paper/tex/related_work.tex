@@ -1,0 +1,29 @@
+\section{Related Work}
+
+\subsection{Biological Attention Mechanisms}
+
+The neuroscience of attention provides rich computational principles. \textbf{Biased competition theory} \cite{desimone1995neural} proposes that attention operates by biasing ongoing competition among stimuli toward task-relevant features. Neural recordings show that top-down signals from prefrontal and parietal cortex modulate activity in sensory areas, enhancing responses to attended stimuli while suppressing others.
+
+\textbf{Lateral inhibition} is fundamental to neural processing, creating center-surround receptive fields that enhance edges and contrasts. In attention, inhibitory circuits sharpen the representation of attended objects by suppressing competing stimuli.
+
+\textbf{Tuning sharpening} refers to attention-induced changes in neural selectivity. When attention is directed to a stimulus, neurons selective for that stimulus show narrowed tuning curves and enhanced response gain.
+
+\textbf{Noise correlation reduction} is a more recent finding: attention reduces correlated variability across neural populations, potentially improving the fidelity of population codes.
+
+\subsection{Transformer Attention}
+
+The transformer architecture \cite{vaswani2017attention} revolutionized sequence processing by replacing recurrence with self-attention. The attention mechanism computes pairwise relationships between all positions, enabling parallel processing and direct access to long-range dependencies.
+
+Several works interpret transformer attention through statistical and geometric lenses. The attention matrix resembles a Gram matrix or kernel function, connecting transformers to kernel methods. Others note the covariance-like structure of $QK^\top$, where learned projections define a similarity metric.
+
+\subsection{Biological Inspiration in Deep Learning}
+
+Attempts to incorporate biological principles into deep learning span decades. Sparse coding, lateral inhibition in convolutional networks, and attention mechanisms themselves draw inspiration from neuroscience. Recent work on sparse attention (e.g., BigBird, Longformer) echoes the selective nature of biological attention, though typically motivated by computational efficiency rather than biological fidelity.
+
+Closest to our work are studies incorporating top-down modulation and competition into attention mechanisms. However, these typically focus on a single architecture (usually transformers) and a single mechanism. Our contribution is systematic comparison across architectures and mechanisms, revealing why certain architectures benefit more from biological enhancement.
+
+\subsection{Sequential vs. Parallel Processing}
+
+The distinction between sequential (RNN/LSTM) and parallel (Transformer) processing has been extensively studied. RNNs suffer from vanishing gradients and compression bottlenecks; LSTMs mitigate but do not eliminate these issues. Transformers avoid sequential dependencies entirely but at quadratic computational cost.
+
+Recent work on state-space models (S4, Mamba) and linear attention attempts to combine the efficiency of recurrence with the representational power of attention. Our framework---distinguishing compression from covariance preservation---provides a lens for understanding how biological mechanisms might integrate with these emerging architectures.

@@ -1,0 +1,45 @@
+<section class="card">
+  <span class="badge">Direction 2</span>
+  <h2>Predictive control + interrupt signals</h2>
+  <p>
+    Endogenous control sets preparatory biases; exogenous signals interrupt and
+    reset. Toggle both and observe shifts in attention allocation.
+  </p>
+  <div class="grid two">
+    <div>
+      <div class="slider-row">
+        <label for="dir2-control">Preparatory control</label>
+        <input id="dir2-control" type="range" min="0" max="1" step="0.05" />
+        <span id="dir2-control-value">0.4</span>
+      </div>
+      <div class="slider-row">
+        <label for="dir2-interrupt">Exogenous interrupt</label>
+        <input id="dir2-interrupt" type="range" min="0" max="1" step="0.05" />
+        <span id="dir2-interrupt-value">0.2</span>
+      </div>
+      <div class="row">
+        <button class="primary" id="dir2-run">Run Demo</button>
+        <button id="dir2-log">Log Result</button>
+      </div>
+    </div>
+    <div>
+      <h3>Control-driven attention</h3>
+    <div class="grid two">
+      <pre class="matrix" id="dir2-matrix"></pre>
+      <div class="network">
+        <svg id="dir2-network"></svg>
+        <p class="muted">Control biases reshape edge weights.</p>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Clinical framing</h2>
+  <ul class="list">
+    <li>Hemineglect suggests loss of endogenous biasing.</li>
+    <li>Exogenous spikes reweight saliency maps abruptly.</li>
+    <li>Predictive control can be modeled as bias terms.</li>
+  </ul>
+</section>

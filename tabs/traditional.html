@@ -1,0 +1,48 @@
+<section class="card">
+  <span class="badge">Training</span>
+  <h2>Traditional attention training</h2>
+  <p>
+    We train a tiny attention head to make token 0 attend to token 2. This runs
+    instantly in-browser and is fully deterministic.
+  </p>
+  <div class="grid two">
+    <div>
+      <div class="slider-row">
+        <label for="traditional-steps">Steps</label>
+        <input id="traditional-steps" type="range" min="10" max="200" step="10" />
+        <span id="traditional-steps-value">80</span>
+      </div>
+      <div class="slider-row">
+        <label for="traditional-lr">Learning rate</label>
+        <input id="traditional-lr" type="range" min="0.01" max="0.4" step="0.01" />
+        <span id="traditional-lr-value">0.12</span>
+      </div>
+      <div class="row">
+        <button class="primary" id="traditional-run">Run Training</button>
+        <button id="traditional-log">Log Result</button>
+      </div>
+    </div>
+    <div>
+      <h3>Attention weights</h3>
+      <div class="grid two">
+        <pre class="matrix" id="traditional-matrix"></pre>
+        <div class="network">
+          <svg id="traditional-network"></svg>
+          <p class="muted">Tokens as nodes; edge width = weight.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Loss curve</h2>
+  <div class="grid two">
+    <canvas class="chart" id="traditional-chart"></canvas>
+    <div>
+      <h3>Generated image (toy)</h3>
+      <canvas class="chart" id="traditional-image"></canvas>
+      <p class="muted">Attention weights mapped to a 3x3 grayscale tile.</p>
+    </div>
+  </div>
+</section>

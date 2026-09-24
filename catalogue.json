@@ -1,0 +1,14 @@
+{
+  "id": "actualAttention",
+  "title": "Actual Attention",
+  "oneLiner": "Fast, replicable transformer demos and physiologically-inspired attention variants.",
+  "kind": "project",
+  "status": "active",
+  "server": {
+    "type": "static",
+    "port": 8080,
+    "openPath": "/",
+    "autoStart": false
+  },
+  "screenshot": "./screenshot.png"
+}

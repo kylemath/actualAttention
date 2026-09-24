@@ -1,0 +1,60 @@
+<section class="card">
+  <span class="badge">Physiology-inspired</span>
+  <h2>Biased competition + inhibition + tuning</h2>
+  <p>
+    Adjust attention mechanisms inspired by neural recordings: biasing,
+    inhibition, sharpening, and noise correlation. Then run the same tiny
+    training loop.
+  </p>
+</section>
+
+<section class="card grid two">
+  <div>
+    <div class="slider-row">
+      <label for="physio-bias">Bias strength</label>
+      <input id="physio-bias" type="range" min="0" max="1" step="0.05" />
+      <span id="physio-bias-value">0.25</span>
+    </div>
+    <div class="slider-row">
+      <label for="physio-inhibition">Lateral inhibition</label>
+      <input id="physio-inhibition" type="range" min="0" max="1" step="0.05" />
+      <span id="physio-inhibition-value">0.3</span>
+    </div>
+    <div class="slider-row">
+      <label for="physio-sharpen">Tuning sharpening</label>
+      <input id="physio-sharpen" type="range" min="0.5" max="2.0" step="0.1" />
+      <span id="physio-sharpen-value">1.2</span>
+    </div>
+    <div class="slider-row">
+      <label for="physio-noise">Noise correlation</label>
+      <input id="physio-noise" type="range" min="0" max="0.5" step="0.05" />
+      <span id="physio-noise-value">0.15</span>
+    </div>
+    <div class="row">
+      <button class="primary" id="physio-run">Run Training</button>
+      <button id="physio-log">Log Result</button>
+    </div>
+  </div>
+  <div>
+    <h3>Attention weights</h3>
+    <div class="grid two">
+      <pre class="matrix" id="physio-matrix"></pre>
+      <div class="network">
+        <svg id="physio-network"></svg>
+        <p class="muted">Bias + inhibition shifts line strength.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Loss curve</h2>
+  <div class="grid two">
+    <canvas class="chart" id="physio-chart"></canvas>
+    <div>
+      <h3>Generated image (toy)</h3>
+      <canvas class="chart" id="physio-image"></canvas>
+      <p class="muted">Attention weights mapped to a 3x3 grayscale tile.</p>
+    </div>
+  </div>
+</section>

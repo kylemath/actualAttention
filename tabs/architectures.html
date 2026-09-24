@@ -1,0 +1,486 @@
+<section class="card">
+  <span class="badge">Architecture Deep Dive</span>
+  <h2>RNN vs LSTM vs Transformer: Mathematical Foundations</h2>
+  <p>
+    How do these architectures differ mathematically? We express each as an operation on input X,
+    revealing where the transformer's covariance-like computation (Q·K<sup>T</sup>) fundamentally 
+    diverges from sequential models. The key insight: <strong>transformers compute explicit pairwise 
+    relationships; RNN/LSTM compress history into a fixed-size state.</strong>
+  </p>
+</section>
+
+<section class="card">
+  <h2>1. RNN: Sequential Compression (No Explicit Covariance)</h2>
+  <div class="grid two">
+    <div>
+      <h3>Operation on X = [x₁, x₂, ..., xₙ]</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6;">
+<span style="color: #94a3b8;">// Initialize hidden state</span>
+h₀ = 0
+
+<span style="color: #60a5fa;">// Recursive update for each timestep t:</span>
+hₜ = σ(W<sub>xh</sub>·xₜ + W<sub>hh</sub>·hₜ₋₁ + b)
+
+<span style="color: #94a3b8;">// Output at final timestep:</span>
+y = W<sub>hy</sub>·hₙ
+      </pre>
+      <h3 style="margin-top: 1.5rem;">Unrolled as Single Operation</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6;">
+<span style="color: #f87171;">// Nested composition:</span>
+hₙ = σ(W<sub>xh</sub>·xₙ + W<sub>hh</sub>·σ(W<sub>xh</sub>·xₙ₋₁ + W<sub>hh</sub>·σ(...)))
+
+<span style="color: #94a3b8;">// Or equivalently:</span>
+hₙ = f(xₙ, f(xₙ₋₁, f(xₙ₋₂, ...f(x₁, h₀))))
+      </pre>
+    </div>
+    <div>
+      <h3>Statistical Equivalent</h3>
+      <div style="background: #dbeafe; padding: 1rem; border-radius: 6px; border-left: 4px solid #2563eb;">
+        <strong>Autoregressive State-Space Model</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.7;">
+          The hidden state hₜ is a <em>lossy compression</em> of all past inputs—like computing 
+          a <strong>running sufficient statistic</strong>.
+        </p>
+      </div>
+      <div style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 6px;">
+        <h4 style="margin-top: 0;">Key Properties:</h4>
+        <ul style="line-height: 1.8; margin-bottom: 0;">
+          <li><strong>No pairwise computation:</strong> Each timestep only "sees" compressed history</li>
+          <li><strong>Fixed bottleneck:</strong> All past info squeezed into h ∈ ℝ<sup>d</sup></li>
+          <li><strong>Markov property:</strong> hₜ is sufficient statistic for past given model</li>
+          <li><strong>Similar to:</strong> Kalman filter, exponential smoothing</li>
+        </ul>
+      </div>
+      <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+        <strong>⚠️ Information Loss:</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.6;">
+          Information about x₁ at timestep N is exponentially decayed:
+          <br><code>Info(x₁ → xₙ) ≈ W<sub>hh</sub><sup>N-1</sup> · x₁</code>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. LSTM: Gated Selective Memory (Adaptive Variance Retention)</h2>
+  <div class="grid two">
+    <div>
+      <h3>Operation on X = [x₁, x₂, ..., xₙ]</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6;">
+<span style="color: #94a3b8;">// For each timestep t:</span>
+
+<span style="color: #f87171;">// Forget gate (what to discard):</span>
+fₜ = σ(W<sub>f</sub>·[hₜ₋₁, xₜ] + b<sub>f</sub>)
+
+<span style="color: #fb923c;">// Input gate (what to add):</span>
+iₜ = σ(W<sub>i</sub>·[hₜ₋₁, xₜ] + b<sub>i</sub>)
+
+<span style="color: #34d399;">// Candidate cell state:</span>
+c̃ₜ = tanh(W<sub>c</sub>·[hₜ₋₁, xₜ] + b<sub>c</sub>)
+
+<span style="color: #60a5fa;">// Cell state update (the "highway"):</span>
+cₜ = fₜ ⊙ cₜ₋₁ + iₜ ⊙ c̃ₜ
+
+<span style="color: #a78bfa;">// Output gate:</span>
+oₜ = σ(W<sub>o</sub>·[hₜ₋₁, xₜ] + b<sub>o</sub>)
+
+<span style="color: #94a3b8;">// Hidden state:</span>
+hₜ = oₜ ⊙ tanh(cₜ)
+      </pre>
+    </div>
+    <div>
+      <h3>Statistical Equivalent</h3>
+      <div style="background: #dcfce7; padding: 1rem; border-radius: 6px; border-left: 4px solid #16a34a;">
+        <strong>Exponential Smoothing with Adaptive Forgetting</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.7;">
+          The cell state is a <em>weighted running average</em> where weights are learned per timestep:
+        </p>
+        <pre style="background: #1e293b; color: #e2e8f0; padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; font-size: 0.85rem;">
+cₜ ≈ Σₛ (Πᵤ₌ₛ₊₁ᵗ fᵤ) · (iₛ ⊙ c̃ₛ)
+        </pre>
+      </div>
+      <div style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 6px;">
+        <h4 style="margin-top: 0;">Gate Interpretations:</h4>
+        <ul style="line-height: 1.8; margin-bottom: 0;">
+          <li><strong>fₜ (forget):</strong> Variance decay rate—how much past signal to retain</li>
+          <li><strong>iₜ (input):</strong> Variance injection—how much new signal to add</li>
+          <li><strong>oₜ (output):</strong> Information gating—what to expose to next layer</li>
+          <li><strong>cₜ (cell):</strong> Long-term memory "highway" for gradient flow</li>
+        </ul>
+      </div>
+      <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+        <strong>Still No Pairwise Computation:</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.6;">
+          LSTM decides how much of each past timestep to "remember" but <em>never directly 
+          compares</em> token t with token t-5. Information flows only through the cell state highway.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>3. Transformer: Explicit Pairwise Covariance</h2>
+  <div class="grid two">
+    <div>
+      <h3>Operation on X ∈ ℝ<sup>N×d</sup></h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6;">
+<span style="color: #60a5fa;">// Linear projections:</span>
+Q = X W<sub>Q</sub>    <span style="color: #94a3b8;">// Queries: ℝ<sup>N×d<sub>k</sub></sup></span>
+K = X W<sub>K</sub>    <span style="color: #94a3b8;">// Keys: ℝ<sup>N×d<sub>k</sub></sup></span>
+V = X W<sub>V</sub>    <span style="color: #94a3b8;">// Values: ℝ<sup>N×d<sub>v</sub></sup></span>
+
+<span style="color: #f87171;">// THE KEY OPERATION - Gram/Covariance Matrix:</span>
+S = Q K<sup>T</sup> / √d<sub>k</sub>    <span style="color: #94a3b8;">// ℝ<sup>N×N</sup> pairwise similarities</span>
+
+<span style="color: #fb923c;">// Softmax normalization:</span>
+A = softmax(S)    <span style="color: #94a3b8;">// Row-stochastic attention weights</span>
+
+<span style="color: #34d399;">// Weighted aggregation + residual:</span>
+Z = A V + X       <span style="color: #94a3b8;">// Output: ℝ<sup>N×d<sub>v</sub></sup></span>
+      </pre>
+      <div style="margin-top: 1rem; padding: 1rem; background: #e0f2fe; border-radius: 6px; border-left: 4px solid #0ea5e9;">
+        <strong>🔑 The Covariance Connection:</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.6;">
+          <strong>S = QK<sup>T</sup></strong> is a <em>Gram matrix</em> (pairwise inner products in projected space).
+          <br><br>
+          If Q, K were mean-centered: <code>Cov(Q,K) = (1/N) QK<sup>T</sup></code>
+          <br><br>
+          This computes <strong>all N² pairwise relationships simultaneously</strong>.
+        </p>
+      </div>
+    </div>
+    <div>
+      <h3>Statistical Equivalent</h3>
+      <div style="background: #dbeafe; padding: 1rem; border-radius: 6px; border-left: 4px solid #2563eb;">
+        <strong>Kernel Regression / Nadaraya-Watson Estimator</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.7;">
+          Each output is a weighted combination of all values, with weights determined 
+          by query-key similarity:
+        </p>
+        <pre style="background: #1e293b; color: #e2e8f0; padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; font-size: 0.85rem;">
+zᵢ = Σⱼ K(qᵢ, kⱼ) · vⱼ / Σⱼ K(qᵢ, kⱼ)
+
+<span style="color: #94a3b8;">where K(q,k) = exp(q·k / √d)</span>
+        </pre>
+      </div>
+      <div style="margin-top: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 6px;">
+        <h4 style="margin-top: 0;">Why This Changes Everything:</h4>
+        <ul style="line-height: 1.8; margin-bottom: 0;">
+          <li><strong>Direct access:</strong> Token i can "query" any token j directly</li>
+          <li><strong>Parallel:</strong> All N² similarities computed simultaneously</li>
+          <li><strong>No compression:</strong> Information preserved, not squeezed through bottleneck</li>
+          <li><strong>Learned similarity:</strong> W<sub>Q</sub>, W<sub>K</sub> adapt the metric to the task</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>The Critical Difference: Compression vs. Covariance</h2>
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+      <thead style="background: #f1f5f9;">
+        <tr>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Property</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">RNN</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">LSTM</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0; background: #e0f2fe;">Transformer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Core Operation</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">hₜ = f(hₜ₋₁, xₜ)<br><em>Recursive</em></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">cₜ = fₜ⊙cₜ₋₁ + iₜ⊙c̃ₜ<br><em>Gated recursive</em></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff;"><strong>Sᵢⱼ = qᵢ·kⱼ</strong><br><em>Pairwise covariance</em></td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Statistical Analog</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">State-space model<br>Markov chain</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Adaptive exponential smoothing<br>Gated Markov</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff;"><strong>Kernel regression</strong><br>Gram matrix</td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Info(x₁ → xₙ)</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">W<sub>hh</sub><sup>N-1</sup>·x₁<br><em>Exponential decay</em></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">(Π fₜ)·x₁<br><em>Gated decay</em></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff;"><strong>Aₙ₁·v₁ = softmax(qₙ·k₁)·v₁</strong><br><em>Direct query</em></td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Computational Graph</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Chain<br>x₁ → x₂ → ... → xₙ</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Chain + gates<br>with cell highway</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff;"><strong>Complete graph</strong><br>All pairs connected</td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Time Complexity</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N·d²)<br>Sequential</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N·d²)<br>Sequential</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff;"><strong>O(N²·d)</strong><br>Parallel</td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Memory Bottleneck</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">h ∈ ℝ<sup>d</sup><br>Fixed size</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">c ∈ ℝ<sup>d</sup><br>Fixed size</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff;"><strong>None</strong><br>Full context retained</td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Training Parallelism</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; color: #dc2626;">None</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; color: #dc2626;">None</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0; background: #f0f9ff; color: #16a34a;"><strong>Full</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Complete Training Operation Comparison</h2>
+  <div class="grid three">
+    <div>
+      <h3>RNN Training (BPTT)</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.5;">
+<span style="color: #60a5fa;">// Forward:</span>
+∀t ∈ [1,N]:
+  hₜ = tanh(W<sub>xh</sub>xₜ + W<sub>hh</sub>hₜ₋₁)
+
+Loss = ℒ(hₙ, y)
+
+<span style="color: #f87171;">// Backward (BPTT):</span>
+∂ℒ/∂W<sub>hh</sub> = Σₜ (∂ℒ/∂hₜ · ∂hₜ/∂W<sub>hh</sub>)
+
+<span style="color: #94a3b8;">// Gradient through time:</span>
+∂hₙ/∂hₜ = Πₛ₌ₜᴺ W<sub>hh</sub><sup>T</sup>·diag(1-hₛ²)
+      </pre>
+      <div style="margin-top: 0.75rem; padding: 0.75rem; background: #fef2f2; border-radius: 6px; border-left: 3px solid #dc2626; font-size: 0.85rem;">
+        <strong>Vanishing Gradient:</strong> Repeated multiplication by W<sub>hh</sub> causes exponential decay.
+      </div>
+    </div>
+    <div>
+      <h3>LSTM Training</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.5;">
+<span style="color: #60a5fa;">// Forward:</span>
+∀t:
+  [fₜ,iₜ,oₜ,c̃ₜ] = gates(W<sub>x</sub>xₜ + W<sub>h</sub>hₜ₋₁)
+  cₜ = fₜ⊙cₜ₋₁ + iₜ⊙c̃ₜ
+  hₜ = oₜ⊙tanh(cₜ)
+
+<span style="color: #f87171;">// Backward (cell highway):</span>
+∂ℒ/∂cₜ = ∂ℒ/∂cₜ₊₁·fₜ₊₁ 
+       + ∂ℒ/∂hₜ·oₜ·(1-tanh²cₜ)
+
+<span style="color: #94a3b8;">// Gradient flows through f gates</span>
+      </pre>
+      <div style="margin-top: 0.75rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b; font-size: 0.85rem;">
+        <strong>Cell Highway:</strong> cₜ = fₜ⊙cₜ₋₁ allows gradient to flow with less decay, but still sequential.
+      </div>
+    </div>
+    <div>
+      <h3>Transformer Training</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.5;">
+<span style="color: #60a5fa;">// Forward:</span>
+Q,K,V = XW<sub>Q</sub>, XW<sub>K</sub>, XW<sub>V</sub>
+S = QK<sup>T</sup>/√d  <span style="color: #94a3b8;">// Gram matrix</span>
+A = softmax(S)
+Z = AV + X    <span style="color: #94a3b8;">// Residual</span>
+
+<span style="color: #f87171;">// Backward (parallel!):</span>
+∂ℒ/∂W<sub>Q</sub> = X<sup>T</sup>·(∂ℒ/∂S)·K
+
+<span style="color: #94a3b8;">// All N² gradients at once</span>
+∂ℒ/∂S = ∂ℒ/∂A · A · (I - 1·A<sup>T</sup>)
+      </pre>
+      <div style="margin-top: 0.75rem; padding: 0.75rem; background: #dcfce7; border-radius: 6px; border-left: 3px solid #16a34a; font-size: 0.85rem;">
+        <strong>No Sequential Dependence:</strong> Every gradient flows through the full covariance matrix in one step.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>The Covariance as "Memory Access Pattern"</h2>
+  <div class="grid two">
+    <div>
+      <h3>RNN/LSTM: Compressed Access</h3>
+      <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 8px; text-align: center;">
+        <div style="font-family: monospace; font-size: 1rem; line-height: 2.5;">
+          <span style="background: #fee2e2; padding: 0.3rem 0.6rem; border-radius: 4px;">x₁</span>
+          <span style="color: #64748b;">→</span>
+          <span style="background: #fef3c7; padding: 0.3rem 0.6rem; border-radius: 4px;">x₂</span>
+          <span style="color: #64748b;">→</span>
+          <span style="background: #d1fae5; padding: 0.3rem 0.6rem; border-radius: 4px;">x₃</span>
+          <span style="color: #64748b;">→</span>
+          <span style="background: #dbeafe; padding: 0.3rem 0.6rem; border-radius: 4px;">x₄</span>
+          <span style="color: #64748b;">→</span>
+          <span style="background: #e9d5ff; padding: 0.3rem 0.6rem; border-radius: 4px;">x₅</span>
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.9rem; color: #64748b;">
+          Information flows only through chain. Each step compresses.
+        </div>
+      </div>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.9rem; margin-top: 1rem;">
+Info(xᵢ → xⱼ) ≈ W<sub>hh</sub><sup>j-i</sup> · xᵢ
+
+<span style="color: #f87171;">// Exponentially decayed!</span>
+<span style="color: #94a3b8;">// After 10 steps: ~0.1^10 = 10^-10</span>
+      </pre>
+    </div>
+    <div>
+      <h3>Transformer: Direct Query Access</h3>
+      <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 8px; text-align: center;">
+        <div style="font-family: monospace; font-size: 1rem; line-height: 2.5;">
+          <span style="background: #fee2e2; padding: 0.3rem 0.6rem; border-radius: 4px;">x₁</span>
+          <span style="background: #fef3c7; padding: 0.3rem 0.6rem; border-radius: 4px;">x₂</span>
+          <span style="background: #d1fae5; padding: 0.3rem 0.6rem; border-radius: 4px;">x₃</span>
+          <span style="background: #dbeafe; padding: 0.3rem 0.6rem; border-radius: 4px;">x₄</span>
+          <span style="background: #e9d5ff; padding: 0.3rem 0.6rem; border-radius: 4px;">x₅</span>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+          ↕ ↕ ↕ ↕ ↕ (all connected to all)
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #64748b;">
+          Every token can directly attend to every other token.
+        </div>
+      </div>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.9rem; margin-top: 1rem;">
+Info(xᵢ → xⱼ) = Aⱼᵢ · vᵢ = softmax(qⱼ·kᵢ<sup>T</sup>) · vᵢ
+
+<span style="color: #34d399;">// Direct query!</span>
+<span style="color: #94a3b8;">// "How much does j want to read from i?"</span>
+      </pre>
+    </div>
+  </div>
+  <div style="margin-top: 1.5rem; padding: 1.2rem; background: #e0f2fe; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+    <strong>💡 The Key Insight:</strong>
+    <p style="margin: 0.5rem 0 0 0; line-height: 1.7;">
+      The attention weight A<sub>ji</sub> is literally <strong>"how much does position j want to read from position i"</strong>—computed 
+      via their covariance in the projected space (q<sub>j</sub>·k<sub>i</sub>). This is why transformers can capture 
+      long-range dependencies that RNNs struggle with: there's no information decay, just direct similarity lookup.
+    </p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Visual: Information Flow Comparison</h2>
+  <div class="grid three">
+    <div style="text-align: center;">
+      <h3>RNN</h3>
+      <svg viewBox="0 0 200 150" style="max-width: 200px; margin: 0 auto;">
+        <!-- Nodes -->
+        <circle cx="30" cy="75" r="15" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+        <circle cx="70" cy="75" r="15" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="110" cy="75" r="15" fill="#d1fae5" stroke="#16a34a" stroke-width="2"/>
+        <circle cx="150" cy="75" r="15" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <!-- Arrows -->
+        <line x1="45" y1="75" x2="55" y2="75" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+        <line x1="85" y1="75" x2="95" y2="75" stroke="#64748b" stroke-width="2"/>
+        <line x1="125" y1="75" x2="135" y2="75" stroke="#64748b" stroke-width="2"/>
+        <!-- Labels -->
+        <text x="30" y="79" text-anchor="middle" font-size="12" fill="#333">h₁</text>
+        <text x="70" y="79" text-anchor="middle" font-size="12" fill="#333">h₂</text>
+        <text x="110" y="79" text-anchor="middle" font-size="12" fill="#333">h₃</text>
+        <text x="150" y="79" text-anchor="middle" font-size="12" fill="#333">h₄</text>
+        <text x="100" y="130" text-anchor="middle" font-size="11" fill="#64748b">Sequential chain</text>
+      </svg>
+    </div>
+    <div style="text-align: center;">
+      <h3>LSTM</h3>
+      <svg viewBox="0 0 200 150" style="max-width: 200px; margin: 0 auto;">
+        <!-- Nodes -->
+        <circle cx="30" cy="75" r="15" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+        <circle cx="70" cy="75" r="15" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="110" cy="75" r="15" fill="#d1fae5" stroke="#16a34a" stroke-width="2"/>
+        <circle cx="150" cy="75" r="15" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <!-- Cell state highway (top) -->
+        <line x1="30" y1="45" x2="150" y2="45" stroke="#a78bfa" stroke-width="3" stroke-dasharray="5,3"/>
+        <line x1="30" y1="60" x2="30" y2="48" stroke="#a78bfa" stroke-width="2"/>
+        <line x1="70" y1="60" x2="70" y2="48" stroke="#a78bfa" stroke-width="2"/>
+        <line x1="110" y1="60" x2="110" y2="48" stroke="#a78bfa" stroke-width="2"/>
+        <line x1="150" y1="60" x2="150" y2="48" stroke="#a78bfa" stroke-width="2"/>
+        <!-- Arrows -->
+        <line x1="45" y1="75" x2="55" y2="75" stroke="#64748b" stroke-width="2"/>
+        <line x1="85" y1="75" x2="95" y2="75" stroke="#64748b" stroke-width="2"/>
+        <line x1="125" y1="75" x2="135" y2="75" stroke="#64748b" stroke-width="2"/>
+        <!-- Labels -->
+        <text x="30" y="79" text-anchor="middle" font-size="12" fill="#333">h₁</text>
+        <text x="70" y="79" text-anchor="middle" font-size="12" fill="#333">h₂</text>
+        <text x="110" y="79" text-anchor="middle" font-size="12" fill="#333">h₃</text>
+        <text x="150" y="79" text-anchor="middle" font-size="12" fill="#333">h₄</text>
+        <text x="100" y="38" text-anchor="middle" font-size="10" fill="#7c3aed">cell highway</text>
+        <text x="100" y="130" text-anchor="middle" font-size="11" fill="#64748b">Chain + highway</text>
+      </svg>
+    </div>
+    <div style="text-align: center;">
+      <h3>Transformer</h3>
+      <svg viewBox="0 0 200 150" style="max-width: 200px; margin: 0 auto;">
+        <!-- Nodes -->
+        <circle cx="40" cy="40" r="15" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+        <circle cx="100" cy="40" r="15" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="160" cy="40" r="15" fill="#d1fae5" stroke="#16a34a" stroke-width="2"/>
+        <circle cx="100" cy="100" r="15" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <!-- All-to-all connections -->
+        <line x1="55" y1="40" x2="85" y2="40" stroke="#94a3b8" stroke-width="1.5"/>
+        <line x1="115" y1="40" x2="145" y2="40" stroke="#94a3b8" stroke-width="1.5"/>
+        <line x1="52" y1="52" x2="88" y2="88" stroke="#94a3b8" stroke-width="1.5"/>
+        <line x1="148" y1="52" x2="112" y2="88" stroke="#94a3b8" stroke-width="1.5"/>
+        <line x1="100" y1="55" x2="100" y2="85" stroke="#94a3b8" stroke-width="1.5"/>
+        <line x1="55" y1="45" x2="145" y2="45" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2"/>
+        <!-- Labels -->
+        <text x="40" y="44" text-anchor="middle" font-size="12" fill="#333">x₁</text>
+        <text x="100" y="44" text-anchor="middle" font-size="12" fill="#333">x₂</text>
+        <text x="160" y="44" text-anchor="middle" font-size="12" fill="#333">x₃</text>
+        <text x="100" y="104" text-anchor="middle" font-size="12" fill="#333">x₄</text>
+        <text x="100" y="135" text-anchor="middle" font-size="11" fill="#64748b">Complete graph</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Summary: Why Covariance Matters</h2>
+  <div class="grid two">
+    <div>
+      <h3>What RNN/LSTM Compute:</h3>
+      <pre style="background: #f1f5f9; padding: 1rem; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">
+output = f(compress(X))
+
+<span style="color: #64748b;">// Where compress() is:</span>
+h = recursive_fold(x₁, x₂, ..., xₙ)
+
+<span style="color: #64748b;">// Statistical view:</span>
+h ≈ E[X | past] + noise
+<span style="color: #dc2626;">// Lossy! Fixed-size summary.</span>
+      </pre>
+    </div>
+    <div>
+      <h3>What Transformers Compute:</h3>
+      <pre style="background: #e0f2fe; padding: 1rem; border-radius: 6px; font-size: 0.9rem; line-height: 1.6;">
+output = f(Cov(X) · X)
+
+<span style="color: #64748b;">// Where Cov() is:</span>
+S = X·W·W<sup>T</sup>·X<sup>T</sup>  <span style="color: #94a3b8;">// N×N</span>
+
+<span style="color: #64748b;">// Statistical view:</span>
+zᵢ = Σⱼ Cov(qᵢ, kⱼ) · vⱼ
+<span style="color: #16a34a;">// Lossless! Full pairwise structure.</span>
+      </pre>
+    </div>
+  </div>
+  <div style="margin-top: 1.5rem; padding: 1.2rem; background: #f1f5f9; border-radius: 8px;">
+    <h4 style="margin-top: 0;">The Tradeoff:</h4>
+    <ul style="line-height: 2; margin-bottom: 0;">
+      <li><strong>RNN/LSTM:</strong> O(N) memory, O(N) compute—but lossy compression and sequential training</li>
+      <li><strong>Transformer:</strong> O(N²) memory, O(N²) compute—but lossless pairwise relationships and parallel training</li>
+      <li><strong>The bet:</strong> Quadratic cost is worth it for capturing the full covariance structure of the sequence</li>
+    </ul>
+  </div>
+  <div style="margin-top: 1rem; padding: 1.2rem; background: #dbeafe; border-radius: 8px; border-left: 4px solid #2563eb;">
+    <strong>🎯 This explains transformer success:</strong> Language and many other domains have complex long-range dependencies. 
+    The explicit covariance computation lets transformers capture these directly, while RNN/LSTM must hope their 
+    compressed state preserves the relevant information through many steps of decay.
+  </div>
+</section>

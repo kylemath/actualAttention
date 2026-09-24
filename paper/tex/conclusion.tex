@@ -1,0 +1,17 @@
+\section{Conclusion}
+
+This work establishes a fundamental connection between neural architecture design and the effectiveness of biological attention mechanisms. We introduce the \textit{compression-covariance dichotomy}: sequential architectures (RNN/LSTM) compress information through a bottleneck that limits biological enhancement, while transformers preserve pairwise relationships that biological mechanisms can directly modulate.
+
+Our experiments confirm this hypothesis quantitatively. Bio-enhanced transformers improve by 11.7\% over baselines, compared to 6.2\% for LSTM and 4.2\% for RNN. This ordering---Transformer > LSTM > RNN---reflects each architecture's capacity to preserve the relational structure that biological mechanisms leverage.
+
+Key contributions of this work include:
+\begin{itemize}
+\item A theoretical framework (compression vs. covariance) explaining differential effectiveness of biological attention across architectures
+\item Implementations of four biologically-inspired mechanisms (biased competition, lateral inhibition, tuning sharpening, noise decorrelation) for RNN, LSTM, and Transformer
+\item Empirical demonstration that transformers benefit most from biological enhancement, with ablation studies quantifying individual mechanism contributions
+\item Analysis revealing emergent sparsity, improved gradient flow, and increased multi-head diversity in bio-enhanced transformers
+\end{itemize}
+
+These findings have practical implications for neural architecture design: preserving relational structure enables more effective integration of biological computational principles. They also suggest a research direction: developing architectures that combine the efficiency of recurrence with the relational preservation of attention, potentially achieving the best of both paradigms.
+
+Looking forward, we anticipate that biological attention mechanisms will become increasingly important as models scale and efficiency becomes paramount. The emergent sparsity we observe---arising naturally from biologically-motivated computations---offers a path toward more efficient attention without sacrificing flexibility. As the field continues to draw inspiration from neuroscience, understanding \textit{why} certain architectures benefit more from biological principles will be essential for informed design choices.

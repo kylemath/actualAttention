@@ -1,0 +1,188 @@
+<section class="card">
+  <span class="badge">Foundation</span>
+  <h2>Attention as Statistical Geometry</h2>
+  <p>
+    Before neural interpretations: attention is matrix decomposition, covariance structure, 
+    and variance routing. This tab shows how transformer attention relates to classical 
+    statistical operations like PCA, SVD, and correlation analysis.
+  </p>
+</section>
+
+<section class="card">
+  <h2>The Covariance Connection</h2>
+  <div class="grid two">
+    <div>
+      <h3>Matrix Structure</h3>
+      <p style="line-height: 1.8; font-size: 0.95rem;">
+        <strong>Q·K<sup>T</sup></strong> computes pairwise similarities—essentially a <em>gram matrix</em>.
+        <br><br>
+        If Q and K were centered (mean=0), this would be a <strong>covariance matrix</strong>:
+        <br>
+        <code>Cov(Q,K) = (1/N) Q·K<sup>T</sup></code>
+        <br><br>
+        Transformer attention skips centering and scaling, but the geometric intuition remains: 
+        <strong>high similarity = shared variance direction</strong>.
+      </p>
+      <div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+        <strong>💡 Key insight:</strong> Attention weights identify which token-pairs 
+        vary together in the projected space.
+      </div>
+    </div>
+    <div>
+      <h3>Covariance Matrix (Q·K<sup>T</sup>)</h3>
+      <pre class="matrix" id="stats-cov"></pre>
+      <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+        Diagonal = self-attention, Off-diagonal = cross-token similarity
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Eigenvalue Decomposition & Variance</h2>
+  <div class="grid two">
+    <div>
+      <h3>Principal Components</h3>
+      <p style="line-height: 1.8; font-size: 0.95rem;">
+        The attention matrix has eigenvalues and eigenvectors:
+        <br>
+        <code>A = V Λ V<sup>-1</sup></code>
+        <br><br>
+        <strong>Eigenvalues</strong> tell us how much variance is concentrated in each "mode."
+        <br>
+        <strong>Eigenvectors</strong> are the principal directions of token mixing.
+        <br><br>
+        Softmax ensures row-sums = 1, so the largest eigenvalue ≈ 1.
+        The rest capture how attention distributes variance across tokens.
+      </p>
+      <canvas id="stats-eigen-chart" class="chart" style="height: 180px;"></canvas>
+      <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; text-align: center;">
+        Eigenvalue spectrum (variance explained per component)
+      </div>
+    </div>
+    <div>
+      <h3>Eigenvectors (Principal Directions)</h3>
+      <pre class="matrix" id="stats-eigen"></pre>
+      <div style="margin-top: 1rem; background: #fef3c7; padding: 1rem; border-radius: 6px; border-left: 4px solid #f59e0b;">
+        <strong>⚠️ Variance retention:</strong> Traditional transformers preserve all variance (full rank). 
+        Low-rank or sparse attention can lose information—track <strong>cumulative variance explained</strong> 
+        to ensure your variant doesn't drop critical signal.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Singular Value Decomposition (SVD) View</h2>
+  <div class="grid two">
+    <div>
+      <h3>How SVD Relates</h3>
+      <p style="line-height: 1.8; font-size: 0.95rem;">
+        We can decompose Q·K<sup>T</sup> as:
+        <br>
+        <code>Q·K<sup>T</sup> = U Σ V<sup>T</sup></code>
+        <br><br>
+        • <strong>U</strong>: Left singular vectors (query space structure)<br>
+        • <strong>Σ</strong>: Singular values (strength of each component)<br>
+        • <strong>V<sup>T</sup></strong>: Right singular vectors (key space structure)
+        <br><br>
+        <strong>Attention is low-rank if Σ has few large values.</strong>
+        This means information flows through a small number of "channels."
+      </p>
+      <div style="margin-top: 1rem;">
+        <label for="stats-rank-slider">Rank approximation:</label>
+        <input type="range" id="stats-rank-slider" min="1" max="3" value="3" step="1" />
+        <span id="stats-rank-value">3</span>
+      </div>
+      <div id="stats-variance-explained" style="margin-top: 0.5rem; font-weight: 600; color: #2563eb;"></div>
+    </div>
+    <div>
+      <h3>Singular Values (Σ)</h3>
+      <canvas id="stats-svd-chart" class="chart" style="height: 150px;"></canvas>
+      <h3 style="margin-top: 1.5rem;">Reconstructed Q·K<sup>T</sup></h3>
+      <pre class="matrix" id="stats-recon"></pre>
+      <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+        Using top-k singular values. Lower rank = information loss.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Correlation vs. Attention</h2>
+  <div class="grid two">
+    <div>
+      <h3>Pearson Correlation Matrix</h3>
+      <pre class="matrix" id="stats-corr"></pre>
+      <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+        Normalized similarity: correlation ∈ [-1, 1]
+      </div>
+    </div>
+    <div>
+      <h3>Attention Matrix (Softmax)</h3>
+      <pre class="matrix" id="stats-attn"></pre>
+      <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+        Row-normalized, non-negative: weights ∈ [0, 1], row sum = 1
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 1.5rem; background: #f1f5f9; padding: 1.2rem; border-radius: 8px;">
+    <h4 style="margin-top: 0;">Why Softmax Instead of Correlation?</h4>
+    <ul style="line-height: 1.8;">
+      <li><strong>Positivity:</strong> Softmax guarantees non-negative weights (interpretable as "routing strength")</li>
+      <li><strong>Normalization:</strong> Row sums = 1 means each output is a convex combination of values</li>
+      <li><strong>Temperature:</strong> Softmax temperature controls peakiness; correlation has no such tuning</li>
+      <li><strong>Differentiability:</strong> Smooth gradients for backprop (unlike hard max or threshold operations)</li>
+    </ul>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Other Statistical Perspectives</h2>
+  <div class="grid three">
+    <div>
+      <h3>Kernel Methods</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        Q·K<sup>T</sup> is a <strong>kernel gram matrix</strong> with kernel k(q,k) = q·k.
+        <br><br>
+        Other kernels (RBF, polynomial) would change the similarity metric.
+        Some attention variants explore this (e.g., cosine attention, ReLU attention).
+      </p>
+    </div>
+    <div>
+      <h3>Fisher Information</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        Attention can be seen as a second-moment matrix (like Fisher information).
+        <br><br>
+        High attention = high "information" about that token.
+        This connects to optimal transport and information geometry.
+      </p>
+    </div>
+    <div>
+      <h3>Markov Chains</h3>
+      <p style="font-size: 0.9rem; line-height: 1.6;">
+        Since rows sum to 1, attention is a <strong>stochastic matrix</strong> (transition probabilities).
+        <br><br>
+        Multi-head attention with residuals is like mixing multiple Markov processes.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Summary: Variance Accountability</h2>
+  <p style="font-size: 1rem; line-height: 1.8;">
+    When designing attention variants, always check:
+  </p>
+  <ol style="line-height: 2; font-size: 0.95rem;">
+    <li><strong>Rank:</strong> Is your attention full-rank or low-rank? Low-rank loses variance.</li>
+    <li><strong>Eigenvalue distribution:</strong> Are a few modes dominant, or is variance spread evenly?</li>
+    <li><strong>Cumulative variance explained:</strong> What % of variance do the top-k components capture?</li>
+    <li><strong>Reconstruction error:</strong> If you threshold/sparsify attention, how much signal is lost?</li>
+  </ol>
+  <div style="margin-top: 1.5rem; background: #dbeafe; padding: 1.2rem; border-radius: 8px; border-left: 4px solid #2563eb;">
+    <strong>📊 Next steps:</strong> In the following tabs, we'll track variance explained for each 
+    attention variant to ensure we're not throwing away signal. Traditional transformers are 
+    variance-preserving by design—our goal is to match or exceed that with bio-inspired mechanisms.
+  </div>
+</section>

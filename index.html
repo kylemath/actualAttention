@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Actual Attention Lab</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="title-block">
+        <h1>Actual Attention Lab</h1>
+        <p>
+          Fast, replicable transformer demos and physiologically inspired
+          attention variants.
+        </p>
+      </div>
+      <div class="controls">
+        <button id="reset-state">Reset Experiments</button>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tab-nav">
+      <button data-tab="comparison">Transformers as Statistics</button>
+      <button data-tab="architectures">RNN vs LSTM vs Transformer</button>
+      <button data-tab="bio-mechanisms">Biological Attention Mechanisms</button>
+      <button data-tab="statistics">Statistical Foundations</button>
+      <button data-tab="overview">Overview + Demos</button>
+      <button data-tab="module">Single Transformer Module</button>
+      <button data-tab="traditional">Traditional Attention Training</button>
+      <button data-tab="physio">Physiological Attention</button>
+      <button data-tab="variants">Attention Variants Lab</button>
+      <button data-tab="direction1">Direction: Sparse &amp; Routing</button>
+      <button data-tab="direction2">Direction: Predictive Control</button>
+      <button data-tab="results">Results Dashboard</button>
+    </nav>
+
+    <main id="tab-content" class="tab-content">
+      <div class="loading">Loading...</div>
+    </main>
+
+    <footer class="footer">
+      <span>All demos run locally in your browser.</span>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

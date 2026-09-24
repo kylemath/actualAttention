@@ -1,0 +1,59 @@
+<section class="card">
+  <span class="badge">Step-by-step</span>
+  <h2>Single transformer module</h2>
+  <p>
+    Walk through the mechanics: build Q, K, V, then compute scores and weights.
+    Click "Step" to advance through the computation stages.
+  </p>
+  <div class="row">
+    <button class="primary" id="module-step">Step</button>
+    <button id="module-reset">Reset</button>
+    <span id="module-step-label" style="margin-left: 1rem; font-weight: 600; color: #2563eb;"></span>
+  </div>
+</section>
+
+<section class="card grid three">
+  <div>
+    <h3>1️⃣ Inputs (X)</h3>
+    <pre class="matrix" id="module-inputs"></pre>
+    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+      <strong>Shape:</strong> N×d (3 tokens × 2 dims)<br>
+      <strong>Meaning:</strong> Raw token embeddings
+    </div>
+  </div>
+  <div>
+    <h3>2️⃣ Projections</h3>
+    <pre class="matrix" id="module-qkv"></pre>
+    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+      <strong>Q:</strong> W<sub>Q</sub>·X (queries)<br>
+      <strong>K:</strong> W<sub>K</sub>·X (keys)<br>
+      <strong>V:</strong> W<sub>V</sub>·X (values)
+    </div>
+  </div>
+  <div>
+    <h3>3️⃣ Attention Weights</h3>
+    <pre class="matrix" id="module-attention"></pre>
+    <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+      <strong>Scores:</strong> Q·K<sup>T</sup> / √d<sub>k</sub><br>
+      <strong>Weights:</strong> softmax(scores)<br>
+      <strong>Each row sums to 1.0</strong>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Visual routing</h2>
+  <div class="network">
+    <svg id="module-network"></svg>
+    <p class="muted">Left = queries, right = keys. Line thickness = weight.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Key ideas</h2>
+  <ul class="list">
+    <li>Scores are similarities, not explicit selection signals.</li>
+    <li>Softmax temperature controls sharpening vs. mixing.</li>
+    <li>Weights only route content vectors (V).</li>
+  </ul>
+</section>

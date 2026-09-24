@@ -1,0 +1,423 @@
+<section class="card">
+  <span class="badge">Foundation</span>
+  <h2>Transformers as Statistical Operations</h2>
+  <p>
+    Distilling transformer attention to its mathematical core: matrix operations, rank reduction, 
+    and comparison to classical statistical methods. How do transformers relate to SVD, eigendecomposition, 
+    and stepwise regression? What makes them computationally distinct?
+  </p>
+</section>
+
+<section class="card">
+  <h2>Transformer Attention: The Algorithm Distilled</h2>
+  <div class="grid two">
+    <div>
+      <h3>Core Operations (Single Head)</h3>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6;">
+<span style="color: #94a3b8;">// Input: X ∈ ℝ^(N×d)</span>
+<span style="color: #60a5fa;">1. Linear Projections:</span>
+   Q = X W_Q    <span style="color: #94a3b8;">// ℝ^(N×d) · ℝ^(d×d_k) → ℝ^(N×d_k)</span>
+   K = X W_K
+   V = X W_V
+
+<span style="color: #f87171;">2. Similarity Matrix:</span>
+   S = Q K^T / √d_k    <span style="color: #94a3b8;">// ℝ^(N×N) gram matrix</span>
+
+<span style="color: #fb923c;">3. Softmax Normalization:</span>
+   A = softmax(S/τ)    <span style="color: #94a3b8;">// row-stochastic matrix</span>
+
+<span style="color: #34d399;">4. Weighted Aggregation:</span>
+   Z = A V             <span style="color: #94a3b8;">// ℝ^(N×N) · ℝ^(N×d_v) → ℝ^(N×d_v)</span>
+      </pre>
+      <div style="background: #fef3c7; padding: 1rem; border-radius: 6px; border-left: 4px solid #f59e0b; margin-top: 1rem;">
+        <strong>⚡ Computational Flavor:</strong>
+        <ul style="margin: 0.5rem 0 0 1rem; line-height: 1.8;">
+          <li><strong>Non-convex:</strong> Multiple weight matrices optimized jointly</li>
+          <li><strong>Quadratic in sequence length:</strong> O(N²d) for attention matrix</li>
+          <li><strong>Differentiable routing:</strong> Softmax enables smooth gradients</li>
+          <li><strong>Data-dependent:</strong> Attention weights computed per input</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <h3>Multi-Head Extension</h3>
+      <p style="font-size: 0.9rem; line-height: 1.7;">
+        Multi-head attention runs <strong>h</strong> independent heads in parallel:
+      </p>
+      <pre style="background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 6px; font-size: 0.85rem;">
+<span style="color: #94a3b8;">// For each head i ∈ {1,...,h}:</span>
+head_i = Attention(X W^Q_i, X W^K_i, X W^V_i)
+
+<span style="color: #94a3b8;">// Concatenate and project:</span>
+MultiHead(X) = Concat(head_1,...,head_h) W^O
+      </pre>
+      <div style="margin-top: 1rem; padding: 1rem; background: #dbeafe; border-radius: 6px; border-left: 4px solid #2563eb;">
+        <strong>📊 Statistical Interpretation:</strong>
+        <ul style="margin: 0.5rem 0 0 1rem; line-height: 1.8;">
+          <li>Each head learns a different subspace projection (like PCA components)</li>
+          <li>Concatenation = mixture of different "views" of the data</li>
+          <li>W^O = final linear combination across heads</li>
+          <li>Analogous to ensemble of low-rank approximations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Comparison to Classical Methods</h2>
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+      <thead style="background: #f1f5f9;">
+        <tr>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Method</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Core Operation</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Rank</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Complexity</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Optimization</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Key Difference</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>SVD</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">X = UΣV^T</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Low-rank (k)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N²d) closed-form</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">None (analytic)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Fixed decomposition; no learned projections</td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>PCA/Eigendecomp</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Cov(X) = VΛV^T</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Low-rank (k)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(d³) closed-form</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">None (analytic)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Finds maximal variance directions; unsupervised</td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Kernel Methods</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">K(x,x') = ⟨φ(x),φ(x')⟩</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Potentially infinite</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N²) for gram matrix</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Convex (many cases)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Fixed kernel; attention = learned adaptive kernel</td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Stepwise Regression</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">β = (X^T X)^-1 X^T y</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Sparse (selected)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(d³) per step</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Greedy selection</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Feature selection; transformers = soft selection</td>
+        </tr>
+        <tr style="background: #e0f2fe;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Transformer Attention</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">softmax(QK^T/√d) V</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Full-rank (typically)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N²d) per layer</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Non-convex (SGD/Adam)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Learned projections + data-dependent routing</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Computational Flavor: What Makes Transformers Different?</h2>
+  <div class="grid three">
+    <div>
+      <h3>1. Learned Adaptive Kernels</h3>
+      <p style="font-size: 0.9rem; line-height: 1.7;">
+        <strong>Classical:</strong> SVD/PCA use fixed similarity (inner product or distance)
+        <br><br>
+        <strong>Transformers:</strong> W_Q and W_K are <em>learned</em>, adapting the similarity metric 
+        to the task. This is like learning a custom kernel function that changes during training.
+        <br><br>
+        <strong>Advantage:</strong> Task-specific similarity; can capture complex relational patterns.
+      </p>
+    </div>
+    <div>
+      <h3>2. Content-Based Routing</h3>
+      <p style="font-size: 0.9rem; line-height: 1.7;">
+        <strong>Classical:</strong> Stepwise regression selects features via hard thresholding (0/1 selection)
+        <br><br>
+        <strong>Transformers:</strong> Softmax provides <em>soft selection</em>—every token contributes, 
+        weighted by relevance. Temperature τ controls sharpness (soft ↔ hard).
+        <br><br>
+        <strong>Advantage:</strong> Differentiable; smooth gradients for backprop. Flexible mixing.
+      </p>
+    </div>
+    <div>
+      <h3>3. Compositional Depth</h3>
+      <p style="font-size: 0.9rem; line-height: 1.7;">
+        <strong>Classical:</strong> SVD/PCA are shallow—one-shot decomposition
+        <br><br>
+        <strong>Transformers:</strong> <em>Stacked layers</em> enable hierarchical feature learning. 
+        Each layer refines representations. Residual connections preserve information flow.
+        <br><br>
+        <strong>Advantage:</strong> Capture multi-level abstractions (like deep CNNs but for sequences).
+      </p>
+    </div>
+  </div>
+  <div style="margin-top: 1.5rem; padding: 1.2rem; background: #f1f5f9; border-radius: 8px;">
+    <h4 style="margin-top: 0;">Why Not Just Use SVD?</h4>
+    <p style="line-height: 1.8; margin-bottom: 0;">
+      SVD gives optimal low-rank approximation for <em>fixed</em> data, but it's:
+    </p>
+    <ul style="line-height: 1.8; margin-top: 0.5rem;">
+      <li><strong>Unsupervised:</strong> Maximizes variance, not task-relevant structure</li>
+      <li><strong>Static:</strong> Decomposition doesn't adapt per input sequence</li>
+      <li><strong>Shallow:</strong> No composition of representations across layers</li>
+      <li><strong>No nonlinearity:</strong> Linear transformation limits expressiveness</li>
+    </ul>
+    <p style="line-height: 1.8; margin-top: 0.5rem;">
+      <strong>Transformers = learnable, deep, nonlinear, data-dependent generalization of matrix factorization.</strong>
+    </p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Three Transformer Flavors: Encoder, Decoder, Encoder-Decoder</h2>
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+      <thead style="background: #f1f5f9;">
+        <tr>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Architecture</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Attention Pattern</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Use Cases</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Complexity (per layer)</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Training Efficiency</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Encoder-Only<br>(BERT, RoBERTa)</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            <strong>Bidirectional</strong><br>
+            Each token attends to all tokens (past + future)
+          </td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            Classification, embedding, understanding tasks where full context available
+          </td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N²d)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            <strong>Fast:</strong> Full parallelization across sequence. Good gradient flow.
+          </td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Decoder-Only<br>(GPT, LLaMA)</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            <strong>Causal/Masked</strong><br>
+            Token i attends only to tokens ≤ i (no future leakage)
+          </td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            Autoregressive generation, language modeling, next-token prediction
+          </td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N²d) with triangular mask</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            <strong>Fast training:</strong> Parallelizable. <br><strong>Slow inference:</strong> Sequential generation.
+          </td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Encoder-Decoder<br>(T5, BART)</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            <strong>Encoder:</strong> Bidirectional<br>
+            <strong>Decoder:</strong> Causal + Cross-attention to encoder
+          </td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            Seq2seq: translation, summarization, question answering
+          </td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">O(N²d + M²d + NMd)<br>(N=enc, M=dec)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">
+            <strong>Moderate:</strong> More parameters, cross-attention overhead. Best for structured I/O.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+    <div style="padding: 1rem; background: #dbeafe; border-radius: 6px; border-left: 4px solid #2563eb;">
+      <strong>🔵 Encoder-Only Gradient Flow:</strong>
+      <p style="margin: 0.5rem 0 0 0; line-height: 1.6; font-size: 0.9rem;">
+        Dense connections → excellent gradient propagation. Bidirectional attention creates rich gradients 
+        from all positions. <em>Best for fine-tuning on supervised tasks.</em>
+      </p>
+    </div>
+    <div style="padding: 1rem; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+      <strong>🟡 Decoder-Only Gradient Flow:</strong>
+      <p style="margin: 0.5rem 0 0 0; line-height: 1.6; font-size: 0.9rem;">
+        Causal mask limits gradient paths (only from future to past). Deeper layers see less direct gradient. 
+        <em>Offset by scale & pretraining. Efficient for generation.</em>
+      </p>
+    </div>
+    <div style="padding: 1rem; background: #dcfce7; border-radius: 6px; border-left: 4px solid #16a34a;">
+      <strong>🟢 Encoder-Decoder Gradient Flow:</strong>
+      <p style="margin: 0.5rem 0 0 0; line-height: 1.6; font-size: 0.9rem;">
+        Cross-attention provides gradient bridge between encoder/decoder. More paths, but also more parameters 
+        to optimize. <em>Needs more data, but strong for structured transformations.</em>
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Training Efficiency & Gradient Descent Utility</h2>
+  <div class="grid two">
+    <div>
+      <h3>Why Transformers Train Well</h3>
+      <ul style="line-height: 2; font-size: 0.95rem;">
+        <li><strong>Parallelizable:</strong> Unlike RNNs, all attention computed simultaneously (O(1) sequential depth)</li>
+        <li><strong>Residual connections:</strong> Direct gradient highways prevent vanishing gradients</li>
+        <li><strong>Layer norm:</strong> Stabilizes activations; reduces internal covariate shift</li>
+        <li><strong>Smooth softmax:</strong> Differentiable routing; continuous gradients unlike hard selection</li>
+        <li><strong>Multi-head diversity:</strong> Different heads learn complementary features → richer gradients</li>
+      </ul>
+      <canvas id="comparison-gradient-chart" class="chart" style="height: 200px; margin-top: 1rem;"></canvas>
+      <div style="text-align: center; font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+        Gradient norm stability across layers (demo)
+      </div>
+    </div>
+    <div>
+      <h3>Challenges & Solutions</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <thead style="background: #f1f5f9;">
+          <tr>
+            <th style="padding: 0.5rem; text-align: left; border: 1px solid #e2e8f0;">Challenge</th>
+            <th style="padding: 0.5rem; text-align: left; border: 1px solid #e2e8f0;">Solution</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">O(N²) memory/compute</td>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Sparse attention, local windows, linear attention</td>
+          </tr>
+          <tr style="background: #fafafa;">
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">High parameter count</td>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Parameter sharing, distillation, pruning</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Softmax saturation</td>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Scaled dot-product (1/√d), temperature tuning</td>
+          </tr>
+          <tr style="background: #fafafa;">
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Optimization instability</td>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Warm-up, gradient clipping, careful init</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Long-range dependencies</td>
+            <td style="padding: 0.5rem; border: 1px solid #e2e8f0;">Relative position encoding, deeper networks</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top: 1rem; padding: 1rem; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
+        <strong>⚠️ Optimizer Choice Matters:</strong>
+        <p style="margin: 0.5rem 0 0 0; line-height: 1.6; font-size: 0.9rem;">
+          <strong>Adam/AdamW:</strong> Standard for transformers. Adaptive LR per parameter; handles sparse gradients well.<br>
+          <strong>SGD+Momentum:</strong> Can work but needs very careful tuning. Less stable in early training.<br>
+          <strong>LAMB/LARS:</strong> For very large batch sizes (distributed training).
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Where Our Attention Variants Fit</h2>
+  <p style="font-size: 1rem; line-height: 1.8;">
+    Now that we understand transformers as <strong>learned, adaptive, data-dependent matrix operations</strong>, 
+    we can position our physiologically-inspired variants:
+  </p>
+  <div style="overflow-x: auto; margin-top: 1rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+      <thead style="background: #f1f5f9;">
+        <tr>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Variant</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Statistical Operation</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Rank/Sparsity</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Training Impact</th>
+          <th style="padding: 0.75rem; text-align: left; border: 1px solid #e2e8f0;">Hypothesis</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Biased Competition</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">S → S + bias vector (additive)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Full-rank + rank-1 update</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Steers gradients toward task-relevant tokens</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Faster convergence on structured tasks</td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Lateral Inhibition</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">S_ij → S_ij - α·mean(S_i)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Centering (like PCA)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Reduces gradient noise from uniform attention</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Sharper representations, less redundancy</td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Tuning Sharpening</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">S → β·S (scale before softmax)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Effective rank reduction</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Higher β → sparser gradients, faster but riskier</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Context-dependent: sharp for clear patterns</td>
+        </tr>
+        <tr style="background: #fafafa;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Sparse/Top-K</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Hard threshold (like stepwise regression)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Enforced sparsity</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Reduced compute, but gradient masking</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Efficiency gain if k ≪ N; needs straight-through estimators</td>
+        </tr>
+        <tr style="background: white;">
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;"><strong>Noise Correlation Reduction</strong></td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Decorrelate attention across heads</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Orthogonality constraint (like ICA)</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Prevents head collapse; diverse gradients</td>
+          <td style="padding: 0.75rem; border: 1px solid #e2e8f0;">Better multi-head utilization</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="margin-top: 1.5rem; padding: 1.2rem; background: #dbeafe; border-radius: 8px; border-left: 4px solid #2563eb;">
+    <strong>🎯 Design Principle:</strong> Our variants modify the statistical properties of attention (rank, sparsity, 
+    correlation structure) to align with known computational principles from neuroscience. Each modification has 
+    a measurable impact on gradient flow, variance explained, and training dynamics—track these to validate improvements.
+  </div>
+</section>
+
+<section class="card">
+  <h2>Summary: Statistical Lens on Transformers</h2>
+  <div class="grid two">
+    <div>
+      <h3>What Transformers ARE:</h3>
+      <ul style="line-height: 2; font-size: 0.95rem;">
+        <li>Learned, adaptive similarity metrics (vs. fixed inner products)</li>
+        <li>Soft, differentiable feature selection (vs. hard thresholding)</li>
+        <li>Data-dependent low-rank approximations (vs. static SVD)</li>
+        <li>Compositional, hierarchical (vs. single-layer PCA)</li>
+        <li>Stochastic matrices with learned row-structure</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What Makes Them Work:</h3>
+      <ul style="line-height: 2; font-size: 0.95rem;">
+        <li>Parallel computation (no sequential bottleneck)</li>
+        <li>Residual paths (gradient highways)</li>
+        <li>Softmax differentiability (smooth optimization)</li>
+        <li>Multi-head diversity (ensemble effect)</li>
+        <li>Scale & data (large models + lots of examples)</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top: 1.5rem; padding: 1.2rem; background: #f1f5f9; border-radius: 8px;">
+    <strong>📚 Next Steps:</strong> In the following tabs, we'll implement and compare traditional transformer 
+    attention with our physiologically-inspired variants. We'll track:
+    <ul style="margin: 0.5rem 0 0 1rem; line-height: 1.8;">
+      <li><strong>Loss convergence:</strong> Do variants learn faster?</li>
+      <li><strong>Variance explained:</strong> Do they preserve signal?</li>
+      <li><strong>Gradient stability:</strong> Do they improve optimization?</li>
+      <li><strong>Computational cost:</strong> Do they reduce O(N²)?</li>
+    </ul>
+  </div>
+</section>

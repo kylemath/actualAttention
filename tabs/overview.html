@@ -1,0 +1,79 @@
+<section class="card">
+  <span class="badge">Fast Demo</span>
+  <h2>Why "attention" is a misnomer</h2>
+  <p>
+    Transformer attention is a weighted routing operator. It does not
+    necessarily reflect sensory selection or endogenous control. Use this tab
+    to explore how simple scores, softmax temperature, and input structure drive
+    the routing.
+  </p>
+</section>
+
+<section class="card">
+  <h2>Transformer Attention: Architecture Flow</h2>
+  <div class="grid two">
+    <div>
+      <svg id="architecture-diagram" style="width: 100%; height: 450px; border: 1px solid #e2e8f0; border-radius: 8px; background: white;"></svg>
+    </div>
+    <div>
+      <h3>Component Legend</h3>
+      <div style="line-height: 2; font-size: 0.95rem;">
+        <div><strong style="color: #2563eb;">📥 Input (X):</strong> Token embeddings (N×d matrix)</div>
+        <div><strong style="color: #7c3aed;">🔄 Q, K, V:</strong> Linear projections W<sub>Q</sub>X, W<sub>K</sub>X, W<sub>V</sub>X</div>
+        <div><strong style="color: #dc2626;">✖️ Scores:</strong> QK<sup>T</sup> / √d<sub>k</sub> (scaled dot product)</div>
+        <div><strong style="color: #ea580c;">📊 Softmax:</strong> exp(scores/τ) / Σ (temperature τ)</div>
+        <div><strong style="color: #16a34a;">⚖️ Attention:</strong> Normalized weights (row sums = 1)</div>
+        <div><strong style="color: #0891b2;">📤 Output (Z):</strong> Attention × V (weighted sum)</div>
+      </div>
+      <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
+      <div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; font-size: 0.9rem;">
+        <strong>💡 Key insight:</strong> This is <em>routing</em>, not <em>selection</em>. Every output token is a weighted mixture of all value vectors, determined by query-key similarity. No winner-take-all, no inhibition—just soft blending.
+      </div>
+      <div style="margin-top: 1rem; font-size: 0.85rem; color: #64748b;">
+        <strong>Dimensions:</strong> N tokens, d dimensions per token, d<sub>k</sub> key/query dim.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <span class="badge">Interactive Demo</span>
+  <h2>Live Attention Computation</h2>
+  <div class="grid two">
+    <div>
+      <div class="slider-row">
+        <label for="overview-temp">Softmax temperature</label>
+        <input id="overview-temp" type="range" min="0.2" max="2.0" step="0.1" />
+        <span id="overview-temp-value">1.0</span>
+      </div>
+      <div class="slider-row">
+        <label for="overview-seed">Input seed</label>
+        <input id="overview-seed" type="range" min="1" max="50" step="1" />
+        <span id="overview-seed-value">10</span>
+      </div>
+      <div class="row">
+        <button class="primary" id="overview-reroll">Reroll Inputs</button>
+        <span class="muted">Deterministic per seed</span>
+      </div>
+    </div>
+    <div>
+      <h3>Attention weights</h3>
+      <div class="grid two">
+        <pre class="matrix" id="overview-matrix"></pre>
+        <div class="network">
+          <svg id="overview-network"></svg>
+          <p class="muted">Circles = tokens, lines = attention weights.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Routing vs. selection</h2>
+  <p>
+    The loss curve below is a toy objective: focus token 0 on token 2. A lower
+    temperature sharpens weights but can destabilize learning.
+  </p>
+  <canvas class="chart" id="overview-chart"></canvas>
+</section>
