@@ -1,5 +1,7 @@
 # Actual Attention Lab
 
+
+🚀 **[Live Demo](https://kylemath.github.io/actualAttention)** 🚀
 Fast, replicable transformer demos and physiologically-inspired attention variants.
 
 ## Overview
